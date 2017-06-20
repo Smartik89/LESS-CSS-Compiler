@@ -8,11 +8,12 @@
  */
 add_action( 'wp_enqueue_scripts', function(){
 	
-	// zwplcc()->addScript( zwplcc_config( 'id' ) . '-config', array(
-	// 	'src'     => zwplcc()->assetsURL( 'js/config.js' ),
-	// 	'deps'    => array( 'jquery' ),
-	// 	'enqueue' => false,
-	// ));
+	if( is_customize_preview() ){
+		zwplcc()->addScript( zwplcc_config( 'id' ) . '-config-frontend', array(
+			'src'     => zwplcc()->assetsURL( 'js/compiler-config-frontend.js' ),
+			'deps'    => array( 'jquery' ),
+		));
+	}
 
 });
 

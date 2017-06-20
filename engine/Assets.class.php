@@ -12,7 +12,11 @@ class Assets{
 		------------------------------------------------------*/
 		if( is_numeric( $handle ) && !empty($s) ){
 			wp_enqueue_style( $s );
-			continue;
+			return true;
+		}
+		elseif( !empty( $handle ) && empty($s) ){
+			wp_enqueue_style( $handle );
+			return true;
 		}
 
 		/* Merge with defaults
@@ -39,7 +43,11 @@ class Assets{
 		----------------------------------------------------*/
 		if( is_numeric( $handle ) && !empty($s) ){
 			wp_enqueue_script( $s );
-			continue;
+			return true;
+		}
+		elseif( !empty( $handle ) && empty($s) ){
+			wp_enqueue_script( $handle );
+			return true;
 		}
 
 		/* Register

@@ -202,7 +202,7 @@ final class ZWPLCC_Plugin{
 		$this->assets->addStyles( $styles );
 	}
 
-	public function addStyle( $handle, $s ){
+	public function addStyle( $handle, $s = false ){
 		$this->assets->addStyle( $handle, $s );
 	}
 
@@ -214,7 +214,7 @@ final class ZWPLCC_Plugin{
 	public function addScripts( $scripts ){
 		$this->assets->addScripts( $scripts );
 	}
-	public function addScript( $handle, $s ){
+	public function addScript( $handle, $s = false ){
 		$this->assets->addScript( $handle, $s );
 	}
 

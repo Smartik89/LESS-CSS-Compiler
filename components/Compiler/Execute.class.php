@@ -12,16 +12,55 @@ class Execute{
 
 	protected function singleCompilerArgs(){
 		return array(
-			// 'id' => , // A unique lowercase alpha-numeric ID. It's the handle for this stylesheet when it's compiled.
-			// 'less_root' => , // The root folder where all less files are in.
-			// 'less_file' => , // The main less file name from root folder.
-			// 'replace' => , // The handle of a registered stylesheet to be replaced.
+			// 'id' => false, // A unique lowercase alpha-numeric ID. It's the handle for this stylesheet when it's compiled.
+			// 'less_root' => false, // The root folder where all less files are in.
+			// 'less_file' => false, // The main less file name from root folder.
+			// 'replace' => false, // The handle of a registered stylesheet to be replaced.
 			// 'fields' => array(), // An array of fields with IDs from customizer and variable names to modify from less
 		);
 	}
 
 	public function compilers(){
-		return apply_filters( 'zwplcc:compilers', array() );
+		$compilers = apply_filters( 'zwplcc:compilers', array() );
+
+		if( !empty( $compilers ) ){
+			$temp = array();
+			foreach ( $compilers as $key => $comp ) {
+				$id = false;
+
+				// Validate ID
+				if( !empty( $comp['id'] ) ){
+					$id = preg_replace( "/[^a-zA-Z0-9_-]+/", "", $comp['id'] );
+					$id = trim( strtolower( $id ) );
+				}
+
+				// Validate fields
+				$fields = !empty( $comp['fields'] ) && is_array( $comp['fields'] ) ? $comp['fields'] : array();
+
+				// Validate less root dir
+				$less_root = !empty( $comp['less_root'] ) ? $comp['less_root'] : false;
+
+				// Validate less file
+				$less_file = !empty( $comp['less_file'] ) ? $comp['less_file'] : false;
+
+				// Validate replacer
+				$replace = !empty( $comp['replace'] ) ? $comp['replace'] : false;
+
+				// We have the minimum requirements
+				if( $id && $fields && $less_root && $less_file ){
+					$temp[] = array(
+						'id'        => $id,
+						'fields'    => $fields,
+						'less_root' => $less_root,
+						'less_file' => $less_file,
+						'replace' => $replace,
+					);
+				}
+			}
+			$compilers = $temp;
+		}
+
+		return $compilers;
 	}
 
 	//------------------------------------//--------------------------------------//
@@ -107,7 +146,7 @@ class Execute{
 					$css_file   = $this->_cssFilePath( $compiler['id'] );
 					$status     = ( false !== file_put_contents( $css_file, $css ) ) ? 'success' : 'error';
 
-					update_option( 'zwplcc_compiled_css_version'.  $compiler['id'], time() );
+					update_option( 'zwplcc_compiled_css_version_'.  $compiler['id'], time() );
 
 					// TODO: The following must be in a multidimensional array with each compiler
 

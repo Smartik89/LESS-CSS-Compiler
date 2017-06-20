@@ -6,11 +6,11 @@
 
 		var self = false;
 
-		var _api      = wp.customize,
-		_config       = zwplcc_config_admin,
-		_ajax_url     = _config.ajax_url,
-		_compilers    = _config.compilers,
-		_compiled_css = {};
+		var _api       = wp.customize,
+		_config        = zwplcc_config_admin,
+		_ajax_url      = _config.ajax_url,
+		_compilers     = _config.compilers,
+		_compiled_css  = {};
 		
 		var _base = {
 
@@ -45,16 +45,24 @@
 
 							});
 						}
+
+						// Trigger a zwplcc_to_process_css event
+						for (var i = _fields.length - 1; i >= 0; i--) {
+							_api( _fields[i].id, function( value ) {
+								value.bind( function( newval ) {
+									
+									$(document).trigger( 'zwplcc_to_process_css', [ newval ] );
+
+								} );
+							} );
+						}
+						
 						
 
 						// Process and save CSS when a LESS field is changed
-						_api.bind( 'change', function(){
-							
-							clearTimeout( _debounce );
+						$(document).on( 'zwplcc_to_process_css', function(){
 
-							var customize   = this; // Customize object alias.
-							var _to_process = false;
-							_old_mods       = _mods;
+							clearTimeout( _debounce );
 
 							_debounce = setTimeout(function() {
 								
@@ -65,35 +73,28 @@
 									// relativeUrls: true
 								}
 
-								var _new_mods = [];
-
 								for (var i = _fields.length - 1; i >= 0; i--) {
-									customize( _fields[i].id, function( value ) {
-										var _this_val = value.get() || false;
+									var _field = _api( _fields[i].id );
+									if( _field ){
+										var _this_val = _field.get() || false;
 										
 										if( _this_val ){
 											options.modifyVars[ _fields[i].variable ] = _this_val;
-											_new_mods[ _fields[i].variable ] = _this_val;
 										}
-
-										if( _old_mods[ _fields[i].variable ] !== _this_val ){
-											_to_process = true;
-										}
-									});
+									}
 								}
 
-								_mods = _new_mods;
-								// console.log( _new_mods );
 
 								less.render(_cached_less_file, options, function (error, output) {
 									
 									if( ! error ) {
 										_compiled_css[ _id ] = output.css;
 
-										$( "#customize-preview iframe" )
-											.contents()
-											.find( '#less-css-renderer-placeholder-'+ _id )
-											.html( output.css );
+
+										self.saveLocalCss( JSON.stringify( _compiled_css ) );
+										self.saveLocalBuildTime( Date.now() );
+
+
 	
 										self.msg( 'info', 'LESS has been processed successfuly.' );
 									}
@@ -104,11 +105,25 @@
 
 							}, 500); // setTimeout
 
-						}); // _api.bind
+						}); // $(document).on( 'zwplcc_to_process_css'...
 					}); //_.each
 				}; // if
 			},
 
+			/* Save local build time for CSS refresh
+			----------------------------------------------------*/
+			saveLocalBuildTime: function( _value ){
+				sessionStorage.setItem( '_zwplcc_compiled_css_build_time', _value );
+			},
+
+			/* Save CSS to session storage for later access
+			----------------------------------------------------*/
+			saveLocalCss: function( _value ){
+				sessionStorage.setItem( '_zwplcc_compiled_css', _value );
+			},
+
+			/* Save CSS to DataBase
+			----------------------------*/
 			saveCss: function(){
 				_api.bind( 'save', function(){
 					if( ! _.isEmpty( _compiled_css ) ){
@@ -169,9 +184,11 @@
 			__construct: function(){
 				self = this;
 
+				self.saveLocalBuildTime( '0' );
+				self.saveLocalCss( '{}' );
 				self.processLess();
 				self.saveCss();
-				
+
 				return this;
 			}
 
@@ -188,7 +205,7 @@
 
 
 $(document).on( 'ready load', function(){
-	$('body').zwplcc_compiler();
+	$(document).zwplcc_compiler();
 });
 
 })(jQuery);
