@@ -3,7 +3,7 @@ namespace ZeroWPLCC\Component\Compiler;
 
 class Execute{
 
-	public function __construct() {
+	public function init() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'frontendCompiledCSS' ), 999 );
 		add_action( 'customize_controls_enqueue_scripts', array( $this, 'compilerScript' ), 199 );
 		add_action( 'wp_head', array( $this, 'compilerPlaceholder' ), 199 );
@@ -20,7 +20,7 @@ class Execute{
 		);
 	}
 
-	public function compilers(){
+	public static function compilers(){
 		$compilers = apply_filters( 'zwplcc:compilers', array() );
 
 		if( !empty( $compilers ) ){
@@ -74,16 +74,26 @@ class Execute{
 		if( !empty( $this->compilers() ) ){
 			
 			foreach ( $this->compilers() as $compiler ) {
-				if( file_exists( $this->_cssFilePath( $compiler['id'] ) ) ){
+				
+				$css_file = apply_filters( 'zwplcc:enqueue_css_file', array(
+					'url' => $this->cssFileUrl( $compiler['id'] ),
+					'path' => $this->cssFilePath( $compiler['id'] ),
+				), $compiler, $this );
+
+				if( file_exists( $css_file['path'] ) ){
 
 					if( !empty( $compiler['replace'] ) ){
 						wp_deregister_style( $compiler['replace'] );
 					}
 
-					zwplcc()->addStyle( zwplcc_config( 'id' ) . '-compiled-css', array(
-						'src'     => $this->_cssFileUrl(  $compiler['id']  ),
-						'ver'     => get_option( 'zwplcc_compiled_css_version_'.  $compiler['id'], '0.1' ),
-					));
+					zwplcc()->addStyle( 
+					zwplcc_config( 'id' ) . '-'. $compiler['id'] . '-compiled-css', 
+						apply_filters( 'zwplcc:css_wp_enqueue', array(
+							'src'     => $css_file['url'],
+							'ver'     => get_option( 'zwplcc_compiled_css_version_'.  $compiler['id'], '0.1' ),
+						), 
+						$compiler )
+					);
 
 				}
 			}
@@ -124,14 +134,18 @@ class Execute{
 		$upload_dir = wp_upload_dir();
 		$up_path    = trailingslashit($upload_dir[ $type ]);
 
-		return $up_path . $id .'-custom.css';
+		return $this->cssFileName( $up_path . $id );
 	}
 
-	public function _cssFilePath( $id ){
+	public function cssFileName( $name ){
+		return $name .'-custom.css';
+	}
+
+	public function cssFilePath( $id ){
 		return $this->_cssFile( $id, 'dir' );
 	}
 
-	public function _cssFileUrl( $id ){
+	public function cssFileUrl( $id ){
 		return $this->_cssFile( $id, 'url' );
 	}
 
@@ -143,12 +157,10 @@ class Execute{
 			foreach ( $this->compilers() as $compiler ) {
 				if( !empty( $_POST[ '_compiled_css' ][ $compiler['id'] ] ) ){
 					$css        = wp_unslash( $_POST[ '_compiled_css' ][ $compiler['id'] ] );
-					$css_file   = $this->_cssFilePath( $compiler['id'] );
+					$css_file   = $this->cssFilePath( $compiler['id'] );
 					$status     = ( false !== file_put_contents( $css_file, $css ) ) ? 'success' : 'error';
 
 					update_option( 'zwplcc_compiled_css_version_'.  $compiler['id'], time() );
-
-					// TODO: The following must be in a multidimensional array with each compiler
 
 					$output[ $compiler['id'] ] = array(
 						'status' => $status,

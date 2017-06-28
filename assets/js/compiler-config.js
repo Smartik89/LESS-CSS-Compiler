@@ -127,6 +127,9 @@
 			saveCss: function(){
 				_api.bind( 'save', function(){
 					if( ! _.isEmpty( _compiled_css ) ){
+						
+						var _saving_msg = self.msg( 'info', 'Saving CSS. Please wait...', 7 );
+						
 						$.ajax({
 							url: _ajax_url,
 							type: 'POST',
@@ -141,16 +144,18 @@
 								
 								_.each( data, function( compiler ){
 									if ( compiler.status == 'success' ){
-										self.msg( 'info', 'CSS compiled and successfuly saved to: '+ compiler.css_file, 7 );
+										self.msg( 'success', 'CSS compiled and successfuly saved to: '+ compiler.css_file, 7 );
 									}
 									else if ( compiler.status == 'error' ){
 										self.msg( 'error', 'Unable to save the compiled CSS.', 7 );
 									}
 								});
-
 							},
 							error: function(xhr, textStatus, errorThrown) {
 								self.msg( 'error', 'Unknown error! Failed to save the CSS.', 7 );
+							},
+							complete: function(){
+								_saving_msg.close();
 							}
 						});
 					}
@@ -158,10 +163,20 @@
 			},
 
 			msg: function( _type, _message, _timeout ){
-				var _title = ( 'error' === _type ) ? 'Error:' : 'Info:';
+				var _title = '';
+				if( 'error' === _type ){
+					_title = 'Error:';
+				}
+				else if( 'info' === _type ){
+					_title = 'Info:';
+				}
+				else if( 'success' === _type ){
+					_title = 'Success:';
+				}
+
 				_timeout = _timeout || 4;
 
-				new Noty({
+				var _noty = new Noty({
 					type: _type,
 					theme: 'mint',
 					layout: 'bottomRight',
@@ -174,6 +189,8 @@
 						close: 'noty_effects_close'
 					},
 				}).show();
+
+				return _noty;
 			},
 
 			/*
