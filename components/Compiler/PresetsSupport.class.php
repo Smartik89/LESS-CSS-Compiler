@@ -7,7 +7,7 @@ class PresetsSupport{
 
 	public function __construct(){
 		add_filter( 'zwplcc:enqueue_css_file', array( $this, 'cssFile' ), 99, 3 );
-		add_action( 'zwpc_preset:create_preset', array( $this, 'duplicateCssFile' ), 99, 2 );
+		add_action( 'zwpocp_preset:create_preset', array( $this, 'duplicateCssFile' ), 99, 2 );
 	}
 
 	/*
@@ -19,11 +19,11 @@ class PresetsSupport{
 		if( !is_customize_preview() && ! is_admin() ){
 			$id = false;
 
-			if( ! empty($_GET[ 'zwpc_preset' ]) ){
-				$id = sanitize_key( $_GET[ 'zwpc_preset' ] );
+			if( ! empty($_GET[ 'zwpocp_preset' ]) ){
+				$id = sanitize_key( $_GET[ 'zwpocp_preset' ] );
 			}
-			else if( ! empty( $_COOKIE[ 'zwpc_preset' ] ) ){
-				$id = sanitize_key( $_COOKIE[ 'zwpc_preset' ] );
+			else if( ! empty( $_COOKIE[ 'zwpocp_preset' ] ) ){
+				$id = sanitize_key( $_COOKIE[ 'zwpocp_preset' ] );
 			}
 
 			if( !empty( $id ) ){
@@ -43,7 +43,7 @@ class PresetsSupport{
 	//------------------------------------//--------------------------------------//
 	
 	/**
-	 * Support for "ZeroWP LESS CSS Compiler" plugin
+	 * Support for "ZeroWP OneClick Presets" plugin
 	 *
 	 * @return void 
 	 */
