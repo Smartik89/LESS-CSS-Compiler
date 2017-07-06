@@ -8,6 +8,7 @@ class PresetsSupport{
 	public function __construct(){
 		add_filter( 'zwplcc:enqueue_css_file', array( $this, 'cssFile' ), 99, 3 );
 		add_action( 'zwpocp_preset:create_preset', array( $this, 'duplicateCssFile' ), 99, 2 );
+		add_action( 'zwpocp_preset:use_preset', array( $this, 'useDuplicatedCssFile' ), 99, 2 );
 	}
 
 	/*
@@ -60,6 +61,28 @@ class PresetsSupport{
 						$exe->cssFilePath( get_stylesheet() .'-presets/'. $id .'/dynamic-css/'. $compiler['id'] ) , 
 						$css 
 					);
+				}
+			}
+		}
+
+	} 
+
+	//------------------------------------//--------------------------------------//
+	
+	/**
+	 * Support for "ZeroWP OneClick Presets" plugin
+	 *
+	 * @return void 
+	 */
+	public function useDuplicatedCssFile( $id, $ajax_obj ){
+		
+		$exe = new Execute;
+		$compilers = $exe->compilers();
+		if( !empty($compilers) ){
+			foreach ($compilers as $compiler) {
+				$css_filepath = $exe->cssFilePath( get_stylesheet() .'-presets/'. $id .'/dynamic-css/'. $compiler['id'] );
+				if( file_exists( $css_filepath ) ){
+					$ajax_obj->file_manager->copyFile( $css_filepath, $exe->cssFilePath( $compiler['id'] ) );
 				}
 			}
 		}
